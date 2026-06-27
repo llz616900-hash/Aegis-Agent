@@ -4,7 +4,7 @@
 
 **A fully offline AI assistant system with long-term memory, real-time voice interaction, and multi-persona support — built from scratch as a personal engineering project.**
 
-> Designed and implemented independently. Runs entirely on local hardware with no cloud APIs, no data upload, and no external dependencies at runtime.
+> Designed and implemented independently. Runs entirely on local hardware with no cloud APIs, no data upload, and no external dependencies at runtime.This project leverages Claude Code as an auxiliary development tool, which is only used to generate basic code skeletons, optimize the audio pipeline of speech algorithms, standardize code formatting, and assist in drafting technical documentation.All core architecture design, business logic organization, full-module debugging, front-end and back-end joint debugging, and feature iterations of the project are independently completed by myself.
 
 ---
 
