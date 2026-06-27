@@ -1,0 +1,21 @@
+# ── Core API ──────────────────────────────────────────────────────────────────
+fastapi>=0.111.0
+uvicorn[standard]>=0.30.0
+python-multipart>=0.0.9
+
+# ── Data validation ───────────────────────────────────────────────────────────
+pydantic>=2.0.0
+
+# ── LLM (Ollama HTTP client) ──────────────────────────────────────────────────
+requests>=2.31.0
+
+# ── Vector memory (ChromaDB) ──────────────────────────────────────────────────
+chromadb>=0.5.0
+sentence-transformers>=3.0.0
+
+# ── ASR (Vosk offline speech recognition) ────────────────────────────────────
+vosk>=0.3.45
+
+# ── TTS (Coqui XTTS-v2 voice cloning) ────────────────────────────────────────
+TTS>=0.22.0
+torch>=2.0.0          # GPU acceleration (CUDA build recommended for 4 GB VRAM)
