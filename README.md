@@ -208,4 +208,5 @@ Aegis-Agent/
 ---
 
 <img width="922" height="873" alt="image" src="https://github.com/user-attachments/assets/8123b395-f0e5-4b69-a4a2-edec6a0fe9ed" />
+<img width="908" height="512" alt="image" src="https://github.com/user-attachments/assets/671ca10d-46d4-4296-a3b4-c5bb4b157e98" />
 
