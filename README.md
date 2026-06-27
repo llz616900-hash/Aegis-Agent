@@ -1,2 +1,210 @@
 # Aegis-Agent
-A local AI assistant with long-term memory, speech interaction, and offline LLM support.
+
+**A fully offline AI assistant system with long-term memory, real-time voice interaction, and multi-persona support — built from scratch as a personal engineering project.**
+
+> Designed and implemented independently. Runs entirely on local hardware with no cloud APIs, no data upload, and no external dependencies at runtime.
+
+---
+
+## What This Project Does
+
+Aegis-Agent is an end-to-end AI companion system that I built to explore how modern AI components fit together in a real product. It combines:
+
+- A **local LLM** (via Ollama) for natural conversation
+- A **vector memory system** (ChromaDB + sentence-transformers) that gives the AI persistent, searchable long-term memory across sessions
+- **Voice cloning TTS** (Coqui XTTS-v2) that generates speech in a custom voice from a small WAV sample
+- **Offline speech recognition** (Vosk) for microphone input with no network required
+- A **context-aware persona engine** that switches between professional and intimate conversation modes based on scene, user input, or manual control
+- A **Flutter mobile client** (Android + iOS) that connects to the backend over local Wi-Fi
+
+Everything runs on a single consumer GPU (tested on RTX 3050 4 GB VRAM).
+
+---
+
+## System Architecture
+
+```mermaid
+graph TD
+    subgraph Flutter Client
+        A[Chat UI] -->|HTTP JSON| B[API Layer]
+        C[Scene Control] -->|HTTP JSON| B
+    end
+
+    subgraph FastAPI Backend
+        B --> D[Chat Router]
+        B --> E[Memory Router]
+        B --> F[Persona Router]
+        B --> G[Scene Router]
+
+        D --> H[Ollama LLM Client]
+        D --> I[ChromaDB Search]
+        D --> J[XTTS-v2 TTS]
+        G --> K[Persona Manager]
+        G --> L[Scene Auto-sync]
+        M[Proactive Worker] -->|background thread| H
+        M --> J
+    end
+
+    subgraph Local Model Stack
+        H --> N[(Ollama — qwen3:4b)]
+        I --> O[(ChromaDB Vector DB)]
+        J --> P[Voice Sample WAV]
+        Q[Vosk ASR] --> R[Microphone Input]
+    end
+```
+
+---
+
+## Technical Highlights
+
+### Long-Term Memory
+Every conversation turn is embedded and stored in ChromaDB. On each new message, the top-5 semantically similar memories are retrieved and prepended to the LLM prompt as context — giving the AI genuine recall without fine-tuning.
+
+### Voice Cloning Pipeline
+XTTS-v2 performs zero-shot voice cloning: given a 10–20 second WAV reference sample, it synthesises any text in that voice, in real time. Optimised to run within 4 GB VRAM by capping synthesis length and managing GPU memory between the LLM and TTS models.
+
+### Persona & Scene Engine
+A lightweight state machine manages two named personas (`aegis_pro` / `aegis_intim`), each mapped to a different LLM configuration and voice sample. Scene changes (`work`, `remote`, `home`, `sleep`) trigger automatic persona transitions, with a manual lock mechanism that overrides all automatic logic.
+
+### Proactive Messaging
+A background thread (`proactive_worker.py`) polls an enable flag and periodically generates unprompted messages using the LLM, synthesises them to audio, and queues them for the client to consume via long-polling.
+
+### Clean Architecture
+The backend is structured as a Python package with clear separation of concerns:
+
+```
+backend/
+├── api/       ← FastAPI routers (chat, memory, persona, scene)
+├── agent/     ← Persona, scene, and proactive message logic
+├── llm/       ← Ollama HTTP client (swappable)
+├── memory/    ← ChromaDB vector store operations
+├── speech/    ← Vosk STT + XTTS-v2 TTS
+└── config/    ← Cross-platform path configuration (pathlib)
+```
+
+Replacing the LLM provider, TTS engine, or ASR model requires changing a single module — the rest of the system is unaffected.
+
+---
+
+## Tech Stack
+
+| Layer | Technology | Notes |
+|---|---|---|
+| Backend API | **FastAPI** + Uvicorn | Async, auto-docs at `/docs` |
+| LLM inference | **Ollama** | Any GGUF model; default qwen3:4b |
+| Vector memory | **ChromaDB** + sentence-transformers | Fully local embeddings |
+| TTS voice cloning | **Coqui XTTS-v2** | Zero-shot, multilingual |
+| ASR speech-to-text | **Vosk** | Offline, < 50 ms latency |
+| Mobile client | **Flutter 3** | Android APK + iOS IPA |
+| Config | Python **pathlib** | Works on Windows, macOS, Linux |
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Python 3.10+
+- [Ollama](https://ollama.com) installed and running
+- NVIDIA GPU recommended (4 GB VRAM minimum for XTTS-v2)
+
+### Install
+
+```bash
+git clone https://github.com/your-username/Aegis-Agent.git
+cd Aegis-Agent
+python -m venv venv && source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+### Configure
+
+1. Pull an Ollama model: `ollama pull qwen3:4b`
+2. Update `MODEL_PRO` / `MODEL_INTIM` in `backend/config/config.py`
+3. Download the [Vosk model](https://alphacephei.com/vosk/models) → extract to `models/vosk/`
+4. Place a voice WAV sample at `sample_voice/formal/01.wav` (see `sample_voice/README.md`)
+
+### Run
+
+```bash
+uvicorn backend.app:app --host 0.0.0.0 --port 8000 --reload
+```
+
+API docs: **http://localhost:8000/docs**
+
+---
+
+## API Overview
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/chat` | Send message → memory-augmented LLM reply |
+| `POST` | `/speech` | WAV upload → transcribed text (Vosk) |
+| `POST` | `/tts` | Text → cloned voice WAV (XTTS-v2) |
+| `POST` | `/scene` | Switch scene, auto-sync persona |
+| `POST` | `/persona` | Manually set persona |
+| `POST` | `/persona_lock` | Lock persona, disable auto-switching |
+| `GET` | `/status` | Persona, scene, memory count, lock state |
+| `GET` | `/memories` | List all memory entries |
+| `POST` | `/memory_reload` | Import chat history into ChromaDB |
+| `POST` | `/memory_clear` | Wipe all memories |
+| `GET` | `/pending_messages` | Poll proactive message queue |
+
+---
+
+## Flutter Client
+
+Located in `frontend/flutter_app/`. Update the backend IP in `lib/main.dart`:
+
+```dart
+const String kBackendHost = '192.168.1.xxx'; // your local machine IP
+```
+
+```bash
+cd frontend/flutter_app
+flutter pub get
+flutter build apk --release   # Android
+flutter build ipa --release   # iOS (requires macOS + Xcode)
+```
+
+---
+
+## Project Structure
+
+```
+Aegis-Agent/
+├── backend/
+│   ├── app.py              # FastAPI app — registers routers, starts worker
+│   ├── api/                # Route handlers (chat, memory, persona, scene)
+│   ├── agent/              # Persona manager, scene engine, proactive worker
+│   ├── config/             # config.py — all paths, model names
+│   ├── core/               # Pydantic request/response models
+│   ├── llm/                # Ollama HTTP client
+│   ├── memory/             # ChromaDB wrapper + file importer
+│   └── speech/             # Vosk ASR + XTTS-v2 TTS + audio conversion
+├── frontend/
+│   └── flutter_app/        # Flutter mobile client
+├── docs/                   # User guide, developer guide, quick start
+├── scripts/                # start_backend.bat / .sh
+├── sample_voice/           # Place your WAV voice samples here (git-ignored)
+├── models/                 # Place downloaded models here (git-ignored)
+├── sample_data/            # Optional: chat history for memory import
+└── tests/                  # Smoke tests
+```
+
+---
+
+## Roadmap
+
+- [ ] Streaming LLM responses (SSE)
+- [ ] Bluetooth peripheral control (bleak)
+- [ ] Wi-Fi based automatic scene detection
+- [ ] Desktop floating notification widget (Windows overlay)
+- [ ] Web UI (React or vanilla JS)
+- [ ] Docker deployment option
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE) for details.
