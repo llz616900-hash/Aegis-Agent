@@ -113,7 +113,7 @@ Replacing the LLM provider, TTS engine, or ASR model requires changing a single 
 ### Install
 
 ```bash
-git clone https://github.com/your-username/Aegis-Agent.git
+git clone https://github.com/llz616900-hash/Aegis-Agent
 cd Aegis-Agent
 python -m venv venv && source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
