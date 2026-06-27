@@ -1,3 +1,4 @@
+<img width="1536" height="1024" alt="9e983d64-6abd-48dc-966e-54da358d7cbf" src="https://github.com/user-attachments/assets/b01999a9-fa19-4abb-9124-86b6a723219a" />
 # Aegis-Agent 本地离线AI助手
 
 ### 开发工具说明
@@ -21,6 +22,7 @@
 - 语音模块：ASR语音识别、TTS语音合成
 - 工程化能力：前后端分离架构设计RESTful、API通信、本地模型部署与调度、模块化语音流水线
 - 环境管理：requirements.txt 标准化依赖
+<img width="922" height="873" alt="image" src="https://github.com/user-attachments/assets/8123b395-f0e5-4b69-a4a2-edec6a0fe9ed" />
 
 ## 快速部署教程
 ### 1. 环境安装
