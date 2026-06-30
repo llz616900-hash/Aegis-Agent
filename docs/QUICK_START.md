@@ -15,7 +15,7 @@
 ## Step 1 — 克隆并安装
 
 ```bash
-git clone https://github.com/your-username/Aegis-Agent.git
+git clone https://github.com/llz616900-hash/Aegis-Agent
 cd Aegis-Agent
 python -m venv venv
 
